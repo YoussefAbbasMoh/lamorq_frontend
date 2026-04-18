@@ -2,7 +2,166 @@
 
 import { X, Upload } from "lucide-react";
 import { useAdmin } from "../admin-context";
-import type { ProductType } from "../types";
+import type { AdminTranslations } from "../admin-context";
+import type { Order, ProductType } from "../types";
+
+function moneyEg(n: number | undefined) {
+  if (n == null || Number.isNaN(Number(n))) return "—";
+  return `${Number(n).toLocaleString()} EGP`;
+}
+
+function OrderDetailsBody({
+  order,
+  t,
+  isRTL,
+  getStatusColor,
+}: {
+  order: Order;
+  t: AdminTranslations;
+  isRTL: boolean;
+  getStatusColor: (status: Order["status"]) => string;
+}) {
+  const gov =
+    (isRTL ? order.shippingGovernorateAr : order.shippingGovernorateEn) ||
+    order.shippingGovernorateEn ||
+    order.shippingGovernorateAr ||
+    "—";
+  const d = order.delivery;
+  const items = order.items ?? [];
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Order ID</p>
+          <p className="text-sm text-foreground font-medium">#{order.id}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Date</p>
+          <p className="text-sm text-gray-700">{order.date}</p>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-xs text-gray-500 mb-1 font-semibold uppercase tracking-wide">Contact</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-700">
+          <div>
+            <span className="text-gray-500">Phone: </span>
+            {order.customerPhone}
+          </div>
+          <div>
+            <span className="text-gray-500">Email: </span>
+            {order.customerEmail?.trim() ? order.customerEmail : "—"}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Payment method</p>
+          <p className="text-sm text-gray-800">{order.paymentMethod}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Order status</p>
+          <span className={`inline-block text-xs px-3 py-1 rounded-full ${getStatusColor(order.status)}`}>
+            {t[order.status as keyof AdminTranslations]}
+          </span>
+        </div>
+      </div>
+
+      <div className="border border-gray-100 rounded-lg p-4 bg-gray-50/80">
+        <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">Delivery</p>
+        <p className="text-sm text-gray-800">
+          <span className="text-gray-500">Governorate: </span>
+          {gov}
+        </p>
+        {d ? (
+          <div className="mt-2 text-sm text-gray-800 space-y-1">
+            <p>
+              <span className="text-gray-500">Name: </span>
+              {[d.firstName, d.lastName].filter(Boolean).join(" ") || "—"}
+            </p>
+            <p>
+              <span className="text-gray-500">Address: </span>
+              {d.address || "—"}
+            </p>
+            {d.apartment ? (
+              <p>
+                <span className="text-gray-500">Apt / suite: </span>
+                {d.apartment}
+              </p>
+            ) : null}
+            <p>
+              <span className="text-gray-500">City: </span>
+              {d.city || "—"}
+            </p>
+            {d.postalCode ? (
+              <p>
+                <span className="text-gray-500">Postal code: </span>
+                {d.postalCode}
+              </p>
+            ) : null}
+            <p>
+              <span className="text-gray-500">Country: </span>
+              {d.country || "—"}
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 mt-1">No delivery address on file (legacy order).</p>
+        )}
+      </div>
+
+      <div>
+        <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">Line items</p>
+        {items.length === 0 ? (
+          <p className="text-sm text-gray-500">No line items stored for this order.</p>
+        ) : (
+          <div className="overflow-x-auto border border-gray-100 rounded-lg">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="text-start px-3 py-2 font-medium text-gray-600">Product</th>
+                  <th className="text-center px-3 py-2 font-medium text-gray-600 w-16">Qty</th>
+                  <th className="text-end px-3 py-2 font-medium text-gray-600 w-28">Unit</th>
+                  <th className="text-end px-3 py-2 font-medium text-gray-600 w-28">Line</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((row, idx) => (
+                  <tr key={`${row.productId}-${idx}`} className="border-b border-gray-50 last:border-0">
+                    <td className="px-3 py-2 text-gray-800">
+                      {isRTL ? row.nameAr || row.nameEn : row.nameEn || row.nameAr}
+                      {row.productId ? (
+                        <span className="block text-xs text-gray-400 mt-0.5">ID: {row.productId}</span>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-2 text-center text-gray-700">{row.quantity}</td>
+                    <td className="px-3 py-2 text-end text-gray-700">{moneyEg(row.unitPrice)}</td>
+                    <td className="px-3 py-2 text-end font-medium text-gray-900">{moneyEg(row.lineTotal)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-gray-200 pt-4 flex flex-col sm:flex-row sm:justify-end gap-2 text-sm">
+        <div className="sm:text-end space-y-1">
+          <p className="text-gray-600">
+            Subtotal: <span className="text-gray-900 font-medium">{moneyEg(order.subtotal)}</span>
+          </p>
+          <p className="text-gray-600">
+            Shipping: <span className="text-gray-900 font-medium">{moneyEg(order.shippingFee)}</span>
+          </p>
+          <p className="text-base pt-1">
+            Total: <span className="text-primary font-semibold">{moneyEg(order.total)}</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function AdminModals() {
   const {
@@ -35,6 +194,7 @@ export function AdminModals() {
     setShowReviewModal,
     editingReview,
     handleSaveReview,
+    isRTL,
   } = useAdmin();
 
   return (
@@ -390,40 +550,7 @@ export function AdminModals() {
 
             <div className="p-6">
               {selectedOrder && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Order ID</p>
-                      <p className="text-sm text-foreground font-medium">#{selectedOrder.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Date</p>
-                      <p className="text-sm text-gray-700">{selectedOrder.date}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Customer Phone</p>
-                    <p className="text-sm text-gray-700">{selectedOrder.customerPhone}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Total Amount</p>
-                      <p className="text-sm text-primary font-semibold">{selectedOrder.total} EGP</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Payment Method</p>
-                      <p className="text-sm text-gray-700">{selectedOrder.paymentMethod}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Order Status</p>
-                    <span
-                      className={`inline-block text-xs px-3 py-1 rounded-full ${getStatusColor(selectedOrder.status)}`}
-                    >
-                      {t[selectedOrder.status as keyof typeof t]}
-                    </span>
-                  </div>
-                </div>
+                <OrderDetailsBody order={selectedOrder} t={t} isRTL={isRTL} getStatusColor={getStatusColor} />
               )}
             </div>
           </div>
@@ -549,15 +676,30 @@ export function AdminModals() {
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    {t.reviewContent}
+                    {t.reviewContextEn}
                   </label>
                   <textarea
-                    name="reviewContent"
-                    defaultValue={editingReview?.reviewContent || ""}
+                    name="contextEn"
+                    defaultValue={editingReview?.contextEn || ""}
                     required
-                    rows={5}
+                    rows={4}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring resize-none text-foreground"
-                    placeholder="Enter review content"
+                    placeholder="Review text in English"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    {t.reviewContextAr}
+                  </label>
+                  <textarea
+                    name="contextAr"
+                    defaultValue={editingReview?.contextAr || ""}
+                    required
+                    rows={4}
+                    dir="rtl"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring resize-none text-foreground"
+                    placeholder="نص المراجعة بالعربية"
                   />
                 </div>
 

@@ -6,6 +6,7 @@ import { Check, ChevronUp, ChevronDown, Info, Banknote, CreditCard, Smartphone }
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useLang } from "@/contexts/LanguageContext";
+import { submitStoreOrder } from "@/lib/api";
 
 function CheckoutInputField({
   placeholder,
@@ -44,14 +45,22 @@ const Checkout = () => {
   } = useCart();
   const { t, isAr } = useLang();
   const [form, setForm] = useState({
-    firstName: "", lastName: "", address: "", apartment: "",
-    city: "", postalCode: "", phone: "",
+    firstName: "",
+    lastName: "",
+    address: "",
+    apartment: "",
+    city: "",
+    postalCode: "",
+    phone: "",
+    email: "",
   });
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "card" | "wallet">("cod");
   const [saveInfo, setSaveInfo] = useState(false);
   const [smsOffers, setSmsOffers] = useState(false);
   const [showItems, setShowItems] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [placedOrderNumber, setPlacedOrderNumber] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const selectedRegion = shippingRegions.find((r) => String(r._id) === selectedShippingRegionId);
   const governorateLabel = selectedRegion
@@ -80,12 +89,16 @@ const Checkout = () => {
         <h2 className="font-display text-3xl font-bold text-foreground">{t("Order Confirmed!", "تم تأكيد الطلب!")}</h2>
         <p className="text-muted-foreground">
           {t(
-            "Thank you for your order! You will receive a confirmation SMS shortly. Your LAMORQ products are on their way.",
-            "شكراً لطلبك! هتوصلك رسالة تأكيد قريباً. منتجات لامورك في الطريق."
+            "Thank you for your order! If you shared an email, you will receive a confirmation there; otherwise we will reach you by phone. Your LAMORQ products are on their way.",
+            "شكراً لطلبك! لو أضفت بريداً إلكترونياً هتوصلك رسالة تأكيد؛ وإلا هنتواصل معاكِ بالهاتف. منتجات لامورك في الطريق."
           )}
         </p>
         <div className="bg-muted p-4 rounded-lg text-sm">
-          <p className="font-medium text-foreground">{t("Order #LMQ-2026-001", "رقم الطلب: LMQ-2026-001")}</p>
+          <p className="font-medium text-foreground">
+            {placedOrderNumber != null
+              ? t(`Order #${placedOrderNumber}`, `رقم الطلب: ${placedOrderNumber}`)
+              : t("Order confirmed", "تم تأكيد الطلب")}
+          </p>
           <p className="text-muted-foreground mt-1">{t("Estimated delivery: 2-4 business days", "التوصيل المتوقع: 2-4 أيام عمل")}</p>
         </div>
         <Link href="/products">
@@ -133,6 +146,18 @@ const Checkout = () => {
               />
               <Info className="absolute end-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             </div>
+            <CheckoutInputField
+              placeholder={t("Email (optional) — for order updates", "البريد (اختياري) — لتحديثات الطلب")}
+              value={form.email}
+              onChange={(v) => handleField("email", v)}
+              type="email"
+            />
+            <p className="text-xs text-muted-foreground -mt-2">
+              {t(
+                "We use this to send your order confirmation and shipping updates. You can leave it blank.",
+                "نستخدمه لإرسال تأكيد الطلب وتحديثات الشحن. يمكنك تركه فارغاً."
+              )}
+            </p>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={smsOffers} onChange={(e) => setSmsOffers(e.target.checked)} className="w-4 h-4 rounded border-border accent-primary" />
               <span className="text-sm text-muted-foreground">{t("Text me with news and offers", "أرسل لي رسائل نصية بالأخبار والعروض")}</span>
@@ -228,10 +253,46 @@ const Checkout = () => {
 
           {/* Complete Order */}
           <Button
-            className="gradient-brand text-primary-foreground hover:opacity-90 w-full py-6 text-base font-semibold"
-            onClick={() => { setConfirmed(true); clearCart(); }}
+            className="gradient-brand text-primary-foreground hover:opacity-90 w-full py-6 text-base font-semibold disabled:opacity-60"
+            disabled={submitting || !selectedShippingRegionId || items.length === 0}
+            onClick={async () => {
+              if (!form.phone.trim() || !form.firstName.trim() || !form.lastName.trim() || !form.address.trim() || !form.city.trim()) {
+                alert(t("Please fill in phone, name, address and city.", "يرجى إدخال الهاتف والاسم والعنوان والمدينة."));
+                return;
+              }
+              if (!selectedShippingRegionId) {
+                alert(t("Please select a governorate.", "يرجى اختيار المحافظة."));
+                return;
+              }
+              setSubmitting(true);
+              try {
+                const { data } = await submitStoreOrder({
+                  items: items.map((i) => ({ productId: i.product.id, quantity: i.quantity })),
+                  shippingRegionId: selectedShippingRegionId,
+                  customerPhone: form.phone.trim(),
+                  customerEmail: form.email.trim() || undefined,
+                  delivery: {
+                    firstName: form.firstName.trim(),
+                    lastName: form.lastName.trim(),
+                    address: form.address.trim(),
+                    apartment: form.apartment.trim() || undefined,
+                    city: form.city.trim(),
+                    postalCode: form.postalCode.trim() || undefined,
+                    country: "Egypt",
+                  },
+                  paymentMethod,
+                });
+                setPlacedOrderNumber(data.orderNumber);
+                setConfirmed(true);
+                clearCart();
+              } catch (e) {
+                alert(e instanceof Error ? e.message : t("Could not place order", "تعذر إتمام الطلب"));
+              } finally {
+                setSubmitting(false);
+              }
+            }}
           >
-            {t("Complete order", "إتمام الطلب")}
+            {submitting ? t("Placing order…", "جاري إرسال الطلب…") : t("Complete order", "إتمام الطلب")}
           </Button>
         </div>
 

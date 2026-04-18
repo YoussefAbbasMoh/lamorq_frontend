@@ -1,7 +1,8 @@
 export type ReviewData = {
   id: string;
   customerName: string;
-  reviewContent: string;
+  contextEn: string;
+  contextAr: string;
   rating: number;
   image?: string;
   location?: string;

@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import { useQuery } from "@tanstack/react-query";
 import { Product } from "@/data/products";
 import { fetchShippingRegions, type ShippingRegion } from "@/lib/api";
+import { toast } from "@/components/ui/sonner";
+import { useLang } from "@/contexts/LanguageContext";
 
 export interface CartItem {
   product: Product;
@@ -60,6 +62,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t, isAr } = useLang();
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [selectedShippingRegionId, setSelectedShippingRegionId] = useState<string | null>(null);
@@ -119,17 +122,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [items, hydrated]);
 
-  const addToCart = useCallback((product: Product, qty = 1) => {
-    setItems((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
-      if (existing) {
-        return prev.map((i) =>
-          i.product.id === product.id ? { ...i, quantity: i.quantity + qty } : i
-        );
-      }
-      return [...prev, { product, quantity: qty }];
-    });
-  }, []);
+  const addToCart = useCallback(
+    (product: Product, qty = 1) => {
+      setItems((prev) => {
+        const existing = prev.find((i) => i.product.id === product.id);
+        if (existing) {
+          return prev.map((i) =>
+            i.product.id === product.id ? { ...i, quantity: i.quantity + qty } : i
+          );
+        }
+        return [...prev, { product, quantity: qty }];
+      });
+      const label = isAr ? product.nameAr : product.name;
+      toast.success(t("Added to cart", "تمت الإضافة إلى السلة"), {
+        description: qty > 1 ? `${label} × ${qty}` : label,
+      });
+    },
+    [t, isAr]
+  );
 
   const removeFromCart = useCallback((productId: string) => {
     setItems((prev) => prev.filter((i) => i.product.id !== productId));

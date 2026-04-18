@@ -26,6 +26,11 @@ export function bustAdminReviewsDedupe() {
   bustDedupeCache(K.reviews);
 }
 
+export function bustAdminOrdersDedupe() {
+  bustDedupeCache(K.orders);
+  bustDedupeCache(K.dashboardStats);
+}
+
 /** Default + upcoming products (used by dashboard + products screens and after product mutations). */
 export async function loadAdminProducts(): Promise<Product[]> {
   return dedupeAsync(K.products, async () => {

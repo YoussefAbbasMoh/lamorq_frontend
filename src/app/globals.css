@@ -209,6 +209,15 @@ body {
   -ms-overflow-style: none;
 }
 
+/* Hide scrollbar on an element while keeping overflow scroll */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 a {
   color: inherit;
   text-decoration: none;

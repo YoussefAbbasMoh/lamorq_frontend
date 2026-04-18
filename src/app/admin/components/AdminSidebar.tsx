@@ -7,11 +7,13 @@ import {
   Package,
   ShoppingBag,
   MessageSquare,
-  FileText,
+  Star,
   Settings,
   LogOut,
   Globe,
   CircleDollarSign,
+  Megaphone,
+  Images,
 } from "lucide-react";
 import { useAdmin } from "../admin-context";
 
@@ -20,8 +22,10 @@ const nav = [
   { href: "/admin/products", labelKey: "products" as const, icon: Package },
   { href: "/admin/orders", labelKey: "orders" as const, icon: ShoppingBag },
   { href: "/admin/massages", labelKey: "messages" as const, icon: MessageSquare },
-  { href: "/admin/content", labelKey: "content" as const, icon: FileText },
+  { href: "/admin/ratings", labelKey: "ratings" as const, icon: Star },
   { href: "/admin/region-prices", labelKey: "regionPrices" as const, icon: CircleDollarSign },
+  { href: "/admin/offers", labelKey: "offersBanner" as const, icon: Megaphone },
+  { href: "/admin/real-results", labelKey: "realResults" as const, icon: Images },
   { href: "/admin/profile", labelKey: "profile" as const, icon: Settings },
 ];
 
@@ -41,7 +45,7 @@ export function AdminSidebar({
 
   return (
     <aside
-      className={`fixed z-50 top-0 h-full w-64 max-w-[85vw] bg-white border-gray-200 overflow-y-auto transition-transform duration-200 md:translate-x-0 ${asideTransform}`}
+      className={`fixed z-50 top-0 h-full w-64 max-w-[85vw] bg-white border-gray-200 overflow-y-auto hide-scrollbar transition-transform duration-200 md:translate-x-0 ${asideTransform}`}
     >
       <div className="p-6">
         <div className="flex items-center gap-3 mb-8">

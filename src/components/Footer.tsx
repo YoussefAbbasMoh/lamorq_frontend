@@ -99,13 +99,26 @@ const Footer = () => {
         </div>
 
         <ScrollReveal delay={0.1}>
-          <div className="border-t border-primary-foreground/20 mt-12 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs opacity-50">
-              © 2026 LAMORQ Cosmetics. {t("All rights reserved.", "جميع الحقوق محفوظة.")}
+          <div className="border-t border-primary-foreground/20 mt-12 pt-6 space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-xs opacity-50">
+                © 2026 LAMORQ Cosmetics. {t("All rights reserved.", "جميع الحقوق محفوظة.")}
+              </p>
+              <Link href="/admin" className="text-xs opacity-30 hover:opacity-60 transition-opacity">
+                {t("Admin Login", "تسجيل دخول الأدمن")}
+              </Link>
+            </div>
+            <p className="text-xs text-center opacity-60">
+              {t("Designed and developed by", "صُمم وطُوّر بواسطة")}{" "}
+              <a
+                href="https://www.absai.dev/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary-foreground/90 hover:underline underline-offset-2"
+              >
+                ABS.AI
+              </a>
             </p>
-            <Link href="/admin" className="text-xs opacity-30 hover:opacity-60 transition-opacity">
-              {t("Admin Login", "تسجيل دخول الأدمن")}
-            </Link>
           </div>
         </ScrollReveal>
       </div>

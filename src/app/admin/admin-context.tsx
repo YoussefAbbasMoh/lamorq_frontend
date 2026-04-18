@@ -470,20 +470,23 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const customerName = formData.get("customerName") as string;
-    const reviewContent = formData.get("reviewContent") as string;
+    const contextEn = String(formData.get("contextEn") ?? "").trim();
+    const contextAr = String(formData.get("contextAr") ?? "").trim();
     const rating = Number(formData.get("rating"));
 
     try {
       if (editingReview) {
         await api.updateRating(editingReview.id, {
           name: customerName,
-          content: reviewContent,
+          contextEn,
+          contextAr,
           rating,
         });
       } else {
         await api.createRating({
           name: customerName,
-          content: reviewContent,
+          contextEn,
+          contextAr,
           rating,
         });
       }

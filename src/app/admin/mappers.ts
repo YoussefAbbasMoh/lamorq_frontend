@@ -80,10 +80,14 @@ export function mapMessage(m: Record<string, unknown>): ContactMessage {
 }
 
 export function mapRating(r: Record<string, unknown>): ReviewData {
+  const legacy = String(r.content || "").trim();
+  const en = String(r.contextEn || "").trim() || legacy;
+  const ar = String(r.contextAr || "").trim() || legacy;
   return {
     id: String(r._id),
     customerName: String(r.name || ""),
-    reviewContent: String(r.content || ""),
+    contextEn: en,
+    contextAr: ar,
     rating: Number(r.rating) || 0,
   };
 }

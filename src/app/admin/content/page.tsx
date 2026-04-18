@@ -1,5 +1,6 @@
-import { ContentScreen } from "../screens/ContentScreen";
+import { redirect } from "next/navigation";
 
-export default function AdminContentPage() {
-  return <ContentScreen />;
+/** Old URL; ratings moved to /admin/ratings */
+export default function LegacyAdminContentRedirect() {
+  redirect("/admin/ratings");
 }

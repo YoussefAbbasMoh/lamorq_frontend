@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import type { Order } from "../types";
 import { useAdmin } from "../admin-context";
-import { loadAdminOrders } from "../loaders";
+import { bustAdminOrdersDedupe, loadAdminOrders } from "../loaders";
+import { updateAdminOrderStatus } from "@/lib/api";
 
 export function OrdersScreen() {
   const {
@@ -45,7 +46,8 @@ export function OrdersScreen() {
     (order) =>
       searchQuery === "" ||
       order.id.toString().includes(searchQuery) ||
-      order.customerPhone.toLowerCase().includes(searchQuery.toLowerCase())
+      order.customerPhone.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.customerEmail && order.customerEmail.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -55,7 +57,7 @@ export function OrdersScreen() {
         <div className="flex items-center gap-4">
           <input
             type="text"
-            placeholder="Search by phone or order ID..."
+            placeholder="Search by phone, email, or order ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring w-64"
@@ -179,12 +181,15 @@ export function OrdersScreen() {
                     <td className="px-6 py-4">
                       <select
                         value={order.status}
-                        onChange={(e) => {
-                          setOrders((prev) =>
-                            prev.map((o) =>
-                              o.id === order.id ? { ...o, status: e.target.value as Order["status"] } : o
-                            )
-                          );
+                        onChange={async (e) => {
+                          const next = e.target.value as Order["status"];
+                          try {
+                            await updateAdminOrderStatus(order.id, next);
+                            bustAdminOrdersDedupe();
+                            setOrders(await loadAdminOrders());
+                          } catch (err) {
+                            alert(err instanceof Error ? err.message : "Update failed");
+                          }
                         }}
                         className={`text-xs px-3 py-1 rounded-full border cursor-pointer ${getStatusColor(order.status)}`}
                       >

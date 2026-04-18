@@ -3,9 +3,23 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Leaf, Shield, Droplets, Heart, ChevronRight, Sparkles, Scissors, Truck, CreditCard, MapPin, ArrowRight } from "lucide-react";
+import {
+  Star,
+  Leaf,
+  Shield,
+  Droplets,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Scissors,
+  Truck,
+  CreditCard,
+  MapPin,
+  ArrowRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import PageTransition from "@/components/PageTransition";
@@ -13,10 +27,12 @@ import ScrollReveal from "@/components/ScrollReveal";
 import StaggerContainer, { staggerItem } from "@/components/StaggerContainer";
 import { categories } from "@/data/products";
 import { useLang } from "@/contexts/LanguageContext";
-import { fetchStoreProducts, fetchStoreRatings } from "@/lib/api";
+import { fetchBannerOffers, fetchRealResults, fetchStoreProducts, fetchStoreRatings } from "@/lib/api";
 import { mapApiProductToStoreProduct } from "@/lib/store-product-mapper";
 
 const STORE_PRODUCTS_KEY = ["store", "products"] as const;
+const BANNER_OFFERS_KEY = ["bannerOffers"] as const;
+const REAL_RESULTS_KEY = ["store", "real-results"] as const;
 import heroProductImg from "@/assets/hero-product-bottle.png";
 import beforeAfterImg from "@/assets/before-after.jpg";
 import glowSerumImg from "@/assets/product-glow-serum.jpg";
@@ -47,19 +63,96 @@ const Home = () => {
     staleTime: 120_000,
   });
 
+  const { data: bannerOffers = [] } = useQuery({
+    queryKey: BANNER_OFFERS_KEY,
+    queryFn: fetchBannerOffers,
+    staleTime: 60_000,
+  });
+
+  const { data: realResultRows = [] } = useQuery({
+    queryKey: REAL_RESULTS_KEY,
+    queryFn: fetchRealResults,
+    staleTime: 60_000,
+  });
+
+  const realResultBlocks = useMemo(() => {
+    return realResultRows
+      .filter((r) => r.product && r.imageUrl)
+      .map((r) => ({
+        id: String(r._id),
+        imageUrl: r.imageUrl,
+        product: mapApiProductToStoreProduct(r.product as Record<string, unknown>),
+      }));
+  }, [realResultRows]);
+
+  const [realResultIndex, setRealResultIndex] = useState(0);
+
+  useEffect(() => {
+    setRealResultIndex((i) => {
+      if (realResultBlocks.length === 0) return 0;
+      return Math.min(i, realResultBlocks.length - 1);
+    });
+  }, [realResultBlocks]);
+
+  const activeRealResultBlock = useMemo(() => {
+    if (realResultBlocks.length === 0) return null;
+    const i = Math.min(realResultIndex, realResultBlocks.length - 1);
+    return realResultBlocks[i];
+  }, [realResultBlocks, realResultIndex]);
+
+  const realResultDisplayIndex = useMemo(() => {
+    if (realResultBlocks.length === 0) return 0;
+    return Math.min(realResultIndex, realResultBlocks.length - 1);
+  }, [realResultBlocks, realResultIndex]);
+
+  const fallbackBannerText = t(
+    "Nationwide delivery — shipping by governorate | Cash on Delivery",
+    "توصيل لجميع المحافظات — الشحن حسب المحافظة | الدفع عند الاستلام"
+  );
+
+  const bannerLines = useMemo(() => {
+    return bannerOffers
+      .map((o) => (isAr ? o.offerAR : o.offerEN).trim())
+      .filter(Boolean);
+  }, [bannerOffers, isAr]);
+
+  const [bannerLineIndex, setBannerLineIndex] = useState(0);
+
+  useEffect(() => {
+    setBannerLineIndex(0);
+  }, [bannerOffers, isAr]);
+
+  useEffect(() => {
+    if (bannerLines.length <= 1) return;
+    const len = bannerLines.length;
+    const id = window.setInterval(() => {
+      setBannerLineIndex((i) => (i + 1) % len);
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [bannerLines.length]);
+
+  const announcementText =
+    bannerLines.length > 0 ? bannerLines[bannerLineIndex % bannerLines.length] : fallbackBannerText;
+
   const products = useMemo(() => rawProducts.map((p) => mapApiProductToStoreProduct(p)), [rawProducts]);
   const featured = useMemo(() => products.filter((p) => p.featured).slice(0, 4), [products]);
   const spotlightId = featured[0]?.id ?? products[0]?.id;
 
   const reviews = useMemo(() => {
     if (!ratingsSuccess) return [];
-    return rawRatings.slice(0, 6).map((r) => ({
-      id: String(r._id ?? r.id ?? ""),
-      name: String(r.name || "").trim(),
-      text: String(r.content ?? r.context ?? "").trim(),
-      rating: Math.min(5, Math.max(0, Math.round(Number(r.rating) || 0))),
-    }));
-  }, [rawRatings, ratingsSuccess]);
+    return rawRatings.slice(0, 6).map((r) => {
+      const legacy = String(r.content ?? "").trim();
+      const en = String(r.contextEn ?? "").trim() || legacy;
+      const ar = String(r.contextAr ?? "").trim() || legacy;
+      const text = (isAr ? ar : en).trim();
+      return {
+        id: String(r._id ?? r.id ?? ""),
+        name: String(r.name || "").trim(),
+        text,
+        rating: Math.min(5, Math.max(0, Math.round(Number(r.rating) || 0))),
+      };
+    });
+  }, [rawRatings, ratingsSuccess, isAr]);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
@@ -73,14 +166,108 @@ const Home = () => {
 
   const iconMap: Record<string, React.ElementType> = { Sparkles, Scissors, Heart };
 
+  const renderHomeRealResultBlock = (block: (typeof realResultBlocks)[number]) => {
+    const p = block.product;
+    const heroImg = p.images[0] || p.image;
+    const priceLabel = t(`E£${p.price.toLocaleString()}`, `${p.price.toLocaleString()} ج.م`);
+    const compareLabel =
+      p.originalPrice != null
+        ? t(`E£${p.originalPrice.toLocaleString()}`, `${p.originalPrice.toLocaleString()} ج.م`)
+        : null;
+    return (
+      <div key={block.id}>
+        <ScrollReveal>
+          <div className="text-center mb-6">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+              {isAr ? p.nameAr : p.name}
+            </h2>
+          </div>
+        </ScrollReveal>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+          <ScrollReveal direction="left">
+            <div className="relative rounded-2xl overflow-hidden shadow-lg h-full min-h-[280px]">
+              {/* API-uploaded URLs: plain img avoids next/image host allowlist drift (see next-image-policy.ts) */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={block.imageUrl}
+                alt={isAr ? `قبل وبعد — ${p.nameAr}` : `Before and after — ${p.name}`}
+                className="w-full h-full object-cover min-h-[280px]"
+                width={800}
+                height={600}
+                loading="lazy"
+                decoding="async"
+              />
+              <div className="absolute bottom-0 inset-x-0 flex">
+                <span className="flex-1 text-center py-2 bg-foreground/70 text-background text-xs font-bold tracking-widest uppercase backdrop-blur-sm">
+                  {t("Before", "قبل")}
+                </span>
+                <span className="flex-1 text-center py-2 bg-primary/80 text-primary-foreground text-xs font-bold tracking-widest uppercase backdrop-blur-sm">
+                  {t("After", "بعد")}
+                </span>
+              </div>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal direction="right">
+            <div className="flex flex-col items-center justify-center text-center space-y-6 h-full">
+              <motion.div
+                whileHover={{ y: -6 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="bg-card rounded-2xl border border-border p-4 shadow-lg w-full max-w-[280px]"
+              >
+                <div className="aspect-square relative rounded-xl overflow-hidden bg-muted">
+                  {/^https?:\/\//i.test(heroImg) ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={heroImg}
+                      alt={isAr ? p.nameAr : p.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={heroImg}
+                      alt={isAr ? p.nameAr : p.name}
+                      fill
+                      sizes="280px"
+                      className="object-cover"
+                    />
+                  )}
+                </div>
+              </motion.div>
+
+              <div className="space-y-3 max-w-sm">
+                <h3 className="font-display text-2xl font-bold text-foreground">
+                  {isAr ? p.nameAr : p.name}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {isAr ? p.shortDescAr || p.descriptionAr : p.shortDesc || p.description}
+                </p>
+                <div className="flex items-center justify-center gap-3 flex-wrap">
+                  <span className="text-lg font-bold text-primary">{priceLabel}</span>
+                  {compareLabel ? (
+                    <span className="text-sm text-muted-foreground line-through">{compareLabel}</span>
+                  ) : null}
+                </div>
+                <Link href={`/products/${p.id}`}>
+                  <Button className="gradient-brand text-primary-foreground hover:opacity-90 mt-3 px-8">
+                    {t("Buy Now", "اشتري الآن")}{" "}
+                    <ChevronRight className="w-4 h-4 ms-1 rtl:-scale-x-100" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <PageTransition>
-      {/* Announcement Bar */}
-      <div className="bg-primary text-primary-foreground text-xs text-center py-2 px-page tracking-wide">
-        {t(
-          "Nationwide delivery — shipping by governorate | Cash on Delivery",
-          "توصيل لجميع المحافظات — الشحن حسب المحافظة | الدفع عند الاستلام"
-        )}
+      {/* Announcement Bar (API-driven; falls back if empty) */}
+      <div className="bg-primary text-primary-foreground text-xs text-center py-2 px-page tracking-wide min-h-[2.5rem] flex items-center justify-center">
+        <span key={`${announcementText}-${bannerLineIndex}`}>{announcementText}</span>
       </div>
 
       {/* 1. Hero */}
@@ -464,7 +651,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 6. Glow Serum / Before & After */}
+      {/* 6. Real results — GET /api/real-results (fallback: static Glow Serum block) */}
       <section className="py-12 md:py-16 bg-background">
         <div className="container mx-auto px-page">
           <ScrollReveal>
@@ -472,87 +659,127 @@ const Home = () => {
               <span className="text-sm font-medium text-primary tracking-widest uppercase">
                 {t("Real Results", "نتائج حقيقية")}
               </span>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mt-2">
-                {t("Glow Serum", "سيروم التوهج")}
-              </h2>
+              {realResultBlocks.length === 0 ? (
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mt-2">
+                  {t("Glow Serum", "سيروم التوهج")}
+                </h2>
+              ) : null}
             </div>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch max-w-5xl mx-auto">
-            {/* Before & After Image */}
-            <ScrollReveal direction="left">
-              <div className="relative rounded-2xl overflow-hidden shadow-lg h-full min-h-[280px]">
-                <Image
-                  src={beforeAfterImg}
-                  alt={t(
-                    "Before and after — skin looks brighter and more even after using LAMORQ Glow Serum",
-                    "قبل وبعد — البشرة أبرق وأوضح بعد استخدام سيروم التوهج من لامورك"
-                  )}
-                  width={800}
-                  height={600}
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="w-full h-full object-cover min-h-[280px]"
-                />
-                <div className="absolute bottom-0 inset-x-0 flex">
-                  <span className="flex-1 text-center py-2 bg-foreground/70 text-background text-xs font-bold tracking-widest uppercase backdrop-blur-sm">
-                    {t("Before", "قبل")}
+          {realResultBlocks.length > 0 && activeRealResultBlock ? (
+            <div className="max-w-5xl mx-auto">
+              {realResultBlocks.length > 1 ? (
+                <div className="flex items-center justify-center gap-4 mb-8" dir="ltr">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 rounded-full border-border"
+                    onClick={() =>
+                      setRealResultIndex(
+                        (i) => (i - 1 + realResultBlocks.length) % realResultBlocks.length
+                      )
+                    }
+                    aria-label={t("Previous result", "النتيجة السابقة")}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <span className="text-sm text-muted-foreground tabular-nums min-w-16 text-center">
+                    {realResultDisplayIndex + 1} / {realResultBlocks.length}
                   </span>
-                  <span className="flex-1 text-center py-2 bg-primary/80 text-primary-foreground text-xs font-bold tracking-widest uppercase backdrop-blur-sm">
-                    {t("After", "بعد")}
-                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 rounded-full border-border"
+                    onClick={() =>
+                      setRealResultIndex((i) => (i + 1) % realResultBlocks.length)
+                    }
+                    aria-label={t("Next result", "النتيجة التالية")}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
                 </div>
-              </div>
-            </ScrollReveal>
+              ) : null}
 
-            {/* Product + CTA */}
-            <ScrollReveal direction="right">
-              <div className="flex flex-col items-center justify-center text-center space-y-6 h-full">
-                <motion.div
-                  whileHover={{ y: -6 }}
-                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                  className="bg-card rounded-2xl border border-border p-4 shadow-lg w-full max-w-[280px]"
-                >
-                  <div className="aspect-square relative rounded-xl overflow-hidden bg-muted">
-                    <Image
-                      src={glowSerumImg}
-                      alt={t(
-                        "LAMORQ Glow Serum bottle — brightening serum for even, radiant skin",
-                        "زجاجة سيروم التوهج من لامورك — سيروم يفتح البشرة ويوحد المظهر"
-                      )}
-                      fill
-                      sizes="280px"
-                      className="object-cover"
-                    />
-                  </div>
-                </motion.div>
-
-                <div className="space-y-3 max-w-sm">
-                  <h3 className="font-display text-2xl font-bold text-foreground">
-                    {t("Glow Serum", "سيروم التوهج")}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {t(
-                      "A lightweight daily serum for a natural glow and a more even tone — gentle enough to reach for every morning.",
-                      "سيروم خفيف للاستخدام اليومي عشان إشراقة طبيعية ولون أوضح — لطيف كفاية إنك تستخدميه كل صباح."
+              {renderHomeRealResultBlock(activeRealResultBlock)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch max-w-5xl mx-auto">
+              <ScrollReveal direction="left">
+                <div className="relative rounded-2xl overflow-hidden shadow-lg h-full min-h-[280px]">
+                  <Image
+                    src={beforeAfterImg}
+                    alt={t(
+                      "Before and after — skin looks brighter and more even after using LAMORQ Glow Serum",
+                      "قبل وبعد — البشرة أبرق وأوضح بعد استخدام سيروم التوهج من لامورك"
                     )}
-                  </p>
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="text-lg font-bold text-primary">
-                      {t("380 EGP", "380 ج.م")}
+                    width={800}
+                    height={600}
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="w-full h-full object-cover min-h-[280px]"
+                  />
+                  <div className="absolute bottom-0 inset-x-0 flex">
+                    <span className="flex-1 text-center py-2 bg-foreground/70 text-background text-xs font-bold tracking-widest uppercase backdrop-blur-sm">
+                      {t("Before", "قبل")}
                     </span>
-                    <span className="text-sm text-muted-foreground line-through">
-                      {t("480 EGP", "480 ج.م")}
+                    <span className="flex-1 text-center py-2 bg-primary/80 text-primary-foreground text-xs font-bold tracking-widest uppercase backdrop-blur-sm">
+                      {t("After", "بعد")}
                     </span>
                   </div>
-                  <Link href={spotlightId ? `/products/${spotlightId}` : "/products"}>
-                    <Button className="gradient-brand text-primary-foreground hover:opacity-90 mt-3 px-8">
-                      {t("Buy Now", "اشتري الآن")} <ChevronRight className="w-4 h-4 ms-1 rtl:-scale-x-100" />
-                    </Button>
-                  </Link>
                 </div>
-              </div>
-            </ScrollReveal>
-          </div>
+              </ScrollReveal>
+
+              <ScrollReveal direction="right">
+                <div className="flex flex-col items-center justify-center text-center space-y-6 h-full">
+                  <motion.div
+                    whileHover={{ y: -6 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    className="bg-card rounded-2xl border border-border p-4 shadow-lg w-full max-w-[280px]"
+                  >
+                    <div className="aspect-square relative rounded-xl overflow-hidden bg-muted">
+                      <Image
+                        src={glowSerumImg}
+                        alt={t(
+                          "LAMORQ Glow Serum bottle — brightening serum for even, radiant skin",
+                          "زجاجة سيروم التوهج من لامورك — سيروم يفتح البشرة ويوحد المظهر"
+                        )}
+                        fill
+                        sizes="280px"
+                        className="object-cover"
+                      />
+                    </div>
+                  </motion.div>
+
+                  <div className="space-y-3 max-w-sm">
+                    <h3 className="font-display text-2xl font-bold text-foreground">
+                      {t("Glow Serum", "سيروم التوهج")}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {t(
+                        "A lightweight daily serum for a natural glow and a more even tone — gentle enough to reach for every morning.",
+                        "سيروم خفيف للاستخدام اليومي عشان إشراقة طبيعية ولون أوضح — لطيف كفاية إنك تستخدميه كل صباح."
+                      )}
+                    </p>
+                    <div className="flex items-center justify-center gap-3">
+                      <span className="text-lg font-bold text-primary">
+                        {t("380 EGP", "380 ج.م")}
+                      </span>
+                      <span className="text-sm text-muted-foreground line-through">
+                        {t("480 EGP", "480 ج.م")}
+                      </span>
+                    </div>
+                    <Link href={spotlightId ? `/products/${spotlightId}` : "/products"}>
+                      <Button className="gradient-brand text-primary-foreground hover:opacity-90 mt-3 px-8">
+                        {t("Buy Now", "اشتري الآن")} <ChevronRight className="w-4 h-4 ms-1 rtl:-scale-x-100" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </ScrollReveal>
+            </div>
+          )}
         </div>
       </section>
 

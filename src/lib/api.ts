@@ -131,7 +131,12 @@ export async function fetchRatings() {
   return json.data;
 }
 
-export async function createRating(body: { rating: number; name: string; content: string }) {
+export async function createRating(body: {
+  rating: number;
+  name: string;
+  contextEn: string;
+  contextAr: string;
+}) {
   return apiRequest<{ data: Record<string, unknown> }>("/api/ratings", {
     method: "POST",
     body: JSON.stringify(body),
@@ -140,7 +145,7 @@ export async function createRating(body: { rating: number; name: string; content
 
 export async function updateRating(
   id: string,
-  body: Partial<{ rating: number; name: string; content: string }>
+  body: Partial<{ rating: number; name: string; contextEn: string; contextAr: string }>
 ) {
   return apiRequest<{ data: Record<string, unknown> }>(`/api/ratings/${id}`, {
     method: "PATCH",
@@ -168,6 +173,14 @@ export async function fetchAdminDashboardStats() {
 
 export async function fetchAdminOrders() {
   const json = await apiRequest<{ data: Order[] }>("/api/admin/orders");
+  return json.data;
+}
+
+export async function updateAdminOrderStatus(orderNumber: number, status: Order["status"]) {
+  const json = await apiRequest<{ data: Order }>(`/api/admin/orders/${orderNumber}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
   return json.data;
 }
 
@@ -208,12 +221,47 @@ export async function submitContactMessage(body: {
   );
 }
 
+export type CheckoutDelivery = {
+  firstName: string;
+  lastName: string;
+  address: string;
+  apartment?: string;
+  city: string;
+  postalCode?: string;
+  country?: string;
+};
+
+export type SubmitOrderPayload = {
+  items: { productId: string; quantity: number }[];
+  shippingRegionId: string;
+  customerPhone: string;
+  /** Optional — order confirmation and status updates */
+  customerEmail?: string;
+  delivery: CheckoutDelivery;
+  paymentMethod: "cod" | "card" | "wallet";
+};
+
+export async function submitStoreOrder(body: SubmitOrderPayload) {
+  return publicApiRequest<{
+    message: { en: string; ar: string };
+    data: { orderNumber: number; total: number; status: string };
+  }>("/api/orders", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function fetchStoreRatings() {
   const json = await publicApiRequest<{ data: Record<string, unknown>[] }>("/api/ratings");
   return json.data;
 }
 
-export async function createStoreRating(body: { rating: number; name: string; content: string }) {
+export async function createStoreRating(body: {
+  rating: number;
+  name: string;
+  contextEn: string;
+  contextAr: string;
+}) {
   return publicApiRequest<{ message: { en: string; ar: string }; data: Record<string, unknown> }>(
     "/api/ratings",
     { method: "POST", body: JSON.stringify(body) }
@@ -257,4 +305,69 @@ export async function updateShippingRegion(
 
 export async function deleteShippingRegion(id: string) {
   return apiRequest(`/api/shipping-regions/${id}`, { method: "DELETE" });
+}
+
+// ——— Home announcement banner offers ———
+
+export type BannerOffer = {
+  _id: string;
+  offerEN: string;
+  offerAR: string;
+};
+
+export async function fetchBannerOffers() {
+  const json = await publicApiRequest<{ data: BannerOffer[] }>("/api/banner-offers");
+  return json.data;
+}
+
+export async function createBannerOffer(body: { offerEN: string; offerAR: string }) {
+  return apiRequest<{ data: BannerOffer }>("/api/banner-offers", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateBannerOffer(id: string, body: Partial<{ offerEN: string; offerAR: string }>) {
+  return apiRequest<{ data: BannerOffer }>(`/api/banner-offers/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteBannerOffer(id: string) {
+  return apiRequest(`/api/banner-offers/${id}`, { method: "DELETE" });
+}
+
+// ——— Real results (before/after + product) ———
+
+export type RealResultRow = {
+  _id: string;
+  productId: string;
+  imageUrl: string;
+  imagePublicId?: string;
+  sortOrder?: number;
+  product: Record<string, unknown> | null;
+};
+
+export async function fetchRealResults() {
+  const json = await publicApiRequest<{ data: RealResultRow[] }>("/api/real-results");
+  return json.data;
+}
+
+export async function createRealResult(formData: FormData) {
+  return apiRequest<{ data: RealResultRow }>("/api/real-results", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function updateRealResult(id: string, formData: FormData) {
+  return apiRequest<{ data: RealResultRow }>(`/api/real-results/${id}`, {
+    method: "PATCH",
+    body: formData,
+  });
+}
+
+export async function deleteRealResult(id: string) {
+  return apiRequest(`/api/real-results/${id}`, { method: "DELETE" });
 }
