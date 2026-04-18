@@ -136,6 +136,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const label = isAr ? product.nameAr : product.name;
       toast.success(t("Added to cart", "تمت الإضافة إلى السلة"), {
         description: qty > 1 ? `${label} × ${qty}` : label,
+        className:
+          "!border-2 !border-green-600 dark:!border-green-500 bg-background text-foreground shadow-lg",
       });
     },
     [t, isAr]

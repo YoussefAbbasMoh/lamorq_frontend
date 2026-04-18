@@ -270,8 +270,8 @@ const Home = () => {
         <span key={`${announcementText}-${bannerLineIndex}`}>{announcementText}</span>
       </div>
 
-      {/* 1. Hero */}
-      <section ref={heroRef} className="relative min-h-[85vh] flex items-center overflow-hidden bg-background">
+      {/* 1. Hero — flex column keeps trust bar in flow on mobile (no overlap with centered content) */}
+      <section ref={heroRef} className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-background lg:min-h-[85vh]">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 right-[15%] -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/[0.06] blur-[100px]" />
           <div className="absolute top-[20%] right-[25%] w-[300px] h-[300px] rounded-full bg-accent/[0.08] blur-[80px]" />
@@ -293,8 +293,12 @@ const Home = () => {
           />
         </div>
 
-        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="container mx-auto px-page relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center py-10 lg:py-0">
+        <motion.div
+          style={{ y: heroY, opacity: heroOpacity }}
+          className="relative z-10 flex min-h-0 w-full flex-1 flex-col justify-center py-8 sm:py-10 lg:py-12"
+        >
+          <div className="container mx-auto px-page">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10 lg:items-center">
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -364,9 +368,9 @@ const Home = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.25, duration: 1, ease: [0.22, 1, 0.36, 1] }}
-              className="flex justify-center lg:justify-end px-10"
+              className="flex justify-center px-4 sm:px-8 lg:justify-end lg:px-10"
             >
-              <div className="relative w-full max-w-[520px] ">
+              <div className="relative w-full max-w-[520px]">
                 <motion.div
                   animate={{ y: [0, -8, 0] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
@@ -456,6 +460,7 @@ const Home = () => {
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] md:w-[420px] h-[360px] md:h-[420px] rounded-full border border-primary/[0.04] z-10" />
               </div>
             </motion.div>
+            </div>
           </div>
         </motion.div>
 
@@ -463,10 +468,10 @@ const Home = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.1, duration: 0.6 }}
-          className="absolute bottom-0 left-0 right-0 z-10 bg-card/60 backdrop-blur-sm border-t border-border/40"
+          className="relative z-20 mt-auto w-full shrink-0 bg-card/60 backdrop-blur-sm border-t border-border/40"
         >
-          <div className="container mx-auto px-page py-3.5">
-            <div className="flex flex-wrap justify-center gap-8 md:gap-12 text-xs text-muted-foreground">
+          <div className="container mx-auto px-page py-3 sm:py-3.5">
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2.5 sm:gap-8 md:gap-12 text-xs text-muted-foreground">
               <span className="flex items-center gap-2"><Truck className="w-3.5 h-3.5 text-primary/70" /> {t("Fast Shipping", "شحن سريع")}</span>
               <span className="flex items-center gap-2"><CreditCard className="w-3.5 h-3.5 text-primary/70" /> {t("Cash on Delivery", "دفع عند الاستلام")}</span>
               <span className="flex items-center gap-2"><Shield className="w-3.5 h-3.5 text-primary/70" /> {t("Guaranteed Quality", "جودة مضمونة")}</span>
