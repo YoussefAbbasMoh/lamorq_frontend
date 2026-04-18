@@ -8,7 +8,7 @@ const Privacy = () => {
   return (
     <div>
       <PageHeader title={t("Privacy Policy", "سياسة الخصوصية")} />
-      <div className="container mx-auto px-4 py-16 max-w-3xl">
+      <div className="container mx-auto px-page py-16 max-w-3xl">
         <div className="space-y-8 text-muted-foreground text-sm leading-relaxed">
           <section>
             <h2 className="font-display text-xl font-bold text-foreground">{t("Information We Collect", "المعلومات التي نجمعها")}</h2>

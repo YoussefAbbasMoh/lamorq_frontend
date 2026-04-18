@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShoppingCart, Menu, X, Globe } from "lucide-react";
@@ -25,7 +26,6 @@ const Header = () => {
   const links = [
     { href: "/", label: t("Home", "الرئيسية") },
     { href: "/products", label: t("Shop", "المتجر") },
-    { href: "/upcoming", label: t("Coming Soon", "قريباً") },
     { href: "/about", label: t("About", "من نحن") },
     { href: "/contact", label: t("Contact", "تواصل معنا") },
   ];
@@ -39,9 +39,16 @@ const Header = () => {
         scrolled ? "bg-background/98 border-border shadow-sm" : "bg-background/95 border-border"
       }`}
     >
-      <div className="container mx-auto px-4 flex items-center justify-between h-16 md:h-20">
+      <div className="container mx-auto px-page flex items-center justify-between h-16 md:h-20">
         <Link href="/" className="flex items-center gap-2">
-          <img src={logo.src} alt="LAMORQ" className="h-10 md:h-12 w-auto" />
+          <Image
+            src={logo}
+            alt="LAMORQ"
+            width={120}
+            height={128}
+            className="h-10 md:h-12 w-auto"
+            priority
+          />
           <span className="font-display text-xl md:text-2xl font-bold text-foreground tracking-wide">
             LAMORQ
           </span>
@@ -115,7 +122,7 @@ const Header = () => {
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="md:hidden bg-background border-t border-border overflow-hidden"
           >
-            <nav className="flex flex-col p-4 gap-3">
+            <nav className="flex flex-col px-page py-4 gap-3">
               {links.map((l, i) => (
                 <motion.div
                   key={l.href}

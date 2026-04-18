@@ -8,11 +8,11 @@ const Terms = () => {
   return (
     <div>
       <PageHeader title={t("Terms & Conditions", "الشروط والأحكام")} />
-      <div className="container mx-auto px-4 py-16 max-w-3xl prose prose-green">
+      <div className="container mx-auto px-page py-16 max-w-3xl prose prose-green">
         <div className="space-y-8 text-muted-foreground text-sm leading-relaxed">
           <section>
             <h2 className="font-display text-xl font-bold text-foreground">{t("1. General", "1. عام")}</h2>
-            <p>{t("By accessing and using the LAMORQ website, you agree to be bound by these terms and conditions. All products sold are for personal use only.", "بالدخول إلى موقع لاموركيو واستخدامه، فإنك توافق على الالتزام بهذه الشروط والأحكام.")}</p>
+            <p>{t("By accessing and using the LAMORQ website, you agree to be bound by these terms and conditions. All products sold are for personal use only.", "بالدخول إلى موقع لامورك واستخدامه، فإنك توافق على الالتزام بهذه الشروط والأحكام.")}</p>
           </section>
           <section>
             <h2 className="font-display text-xl font-bold text-foreground">{t("2. Products", "2. المنتجات")}</h2>
@@ -24,7 +24,7 @@ const Terms = () => {
           </section>
           <section>
             <h2 className="font-display text-xl font-bold text-foreground">{t("4. Shipping & Returns", "4. الشحن والإرجاع")}</h2>
-            <p>{t("Delivery within Egypt takes 2-4 business days. Free shipping on orders above 500 EGP. Returns accepted within 14 days for unopened products.", "التوصيل داخل مصر يستغرق 2-4 أيام عمل. شحن مجاني للطلبات فوق 500 جنيه.")}</p>
+            <p>{t("Delivery within Egypt takes 2-4 business days. Shipping fees depend on your governorate and are shown at checkout. Returns accepted within 14 days for unopened products.", "التوصيل داخل مصر يستغرق 2-4 أيام عمل. رسوم الشحن تعتمد على محافظتك وتظهر عند إتمام الطلب.")}</p>
           </section>
         </div>
       </div>

@@ -59,7 +59,7 @@ const ProductDetails = () => {
 
   if (detailLoading) {
     return (
-      <div className="container mx-auto px-4 py-12 md:py-16">
+      <div className="container mx-auto px-page py-12 md:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 animate-pulse">
           <div className="aspect-square rounded-xl bg-muted" />
           <div className="space-y-4">
@@ -74,7 +74,7 @@ const ProductDetails = () => {
 
   if (detailError || !product) {
     return (
-      <div className="container mx-auto px-4 py-16 md:py-24 text-center">
+      <div className="container mx-auto px-page py-16 md:py-24 text-center">
         <h1 className="font-display text-2xl">{t("Product not found", "المنتج غير موجود")}</h1>
         {detailErr instanceof Error && (
           <p className="text-sm text-muted-foreground mt-2">{detailErr.message}</p>
@@ -98,7 +98,7 @@ const ProductDetails = () => {
     : product.category.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
-    <div className="container mx-auto px-4 py-12 md:py-16">
+    <div className="container mx-auto px-page py-12 md:py-16">
       <Link href="/products" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6">
         <ChevronLeft className="w-4 h-4 me-1 rtl:rotate-180" /> {t("Back to Shop", "العودة للمتجر")}
       </Link>
@@ -123,7 +123,11 @@ const ProductDetails = () => {
                     activeImage === i ? "border-primary" : "border-border"
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={img}
+                    alt={`${isAr ? product.nameAr : product.name} — photo ${i + 1}`}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>

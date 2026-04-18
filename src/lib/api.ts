@@ -219,3 +219,42 @@ export async function createStoreRating(body: { rating: number; name: string; co
     { method: "POST", body: JSON.stringify(body) }
   );
 }
+
+// ——— Shipping regions (governorate pricing) ———
+
+export type ShippingRegion = {
+  _id: string;
+  government_en: string;
+  government_ar: string;
+  price: number;
+};
+
+export async function fetchShippingRegions() {
+  const json = await publicApiRequest<{ data: ShippingRegion[] }>("/api/shipping-regions");
+  return json.data;
+}
+
+export async function createShippingRegion(body: {
+  government_en: string;
+  government_ar: string;
+  price: number;
+}) {
+  return apiRequest<{ data: ShippingRegion }>("/api/shipping-regions", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateShippingRegion(
+  id: string,
+  body: Partial<{ government_en: string; government_ar: string; price: number }>
+) {
+  return apiRequest<{ data: ShippingRegion }>(`/api/shipping-regions/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteShippingRegion(id: string) {
+  return apiRequest(`/api/shipping-regions/${id}`, { method: "DELETE" });
+}

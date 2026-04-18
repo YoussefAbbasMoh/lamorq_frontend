@@ -27,7 +27,7 @@ const PageHeader = ({ title, subtitle, breadcrumbs }: PageHeaderProps) => {
 
   return (
     <div className="bg-background">
-      <div className="container mx-auto px-4 py-8 md:py-10">
+      <div className="container mx-auto px-page py-8 md:py-10">
         {/* Breadcrumbs */}
         <motion.nav
           initial={{ opacity: 0 }}

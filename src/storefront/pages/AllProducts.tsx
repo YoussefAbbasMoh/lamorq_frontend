@@ -11,34 +11,105 @@ import PageHeader from "@/components/PageHeader";
 import StaggerContainer, { staggerItem } from "@/components/StaggerContainer";
 import { categories } from "@/data/products";
 import { useLang } from "@/contexts/LanguageContext";
-import { fetchStoreProducts } from "@/lib/api";
-import { mapApiProductToStoreProduct } from "@/lib/store-product-mapper";
+import UpcomingShopRows from "@/components/UpcomingShopRows";
+import { fetchStoreProducts, fetchStoreUpcomingProducts } from "@/lib/api";
+import { mapApiProductToStoreProduct, mapApiUpcomingToStoreItem } from "@/lib/store-product-mapper";
 
 const STORE_PRODUCTS_KEY = ["store", "products"] as const;
+
+const SORT_VALUES = ["featured", "price-low", "price-high", "rating"] as const;
+type SortValue = (typeof SORT_VALUES)[number];
+
+const CATEGORY_IDS = new Set(categories.map((c) => c.id));
+
+function parseSortParam(s: string | null): SortValue {
+  if (s && SORT_VALUES.includes(s as SortValue)) return s as SortValue;
+  return "featured";
+}
+
+function parsePageParam(s: string | null): number {
+  const n = parseInt(s || "1", 10);
+  return Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
+/** Drop default query keys so `/products` stays clean when only defaults apply. */
+function finalizeListParams(p: URLSearchParams) {
+  const sort = p.get("sort");
+  if (!sort || sort === "featured") p.delete("sort");
+  const pg = p.get("page");
+  if (!pg || pg === "1") p.delete("page");
+  const cat = p.get("category");
+  if (!cat) p.delete("category");
+}
 
 const AllProducts = () => {
   const { t, isAr } = useLang();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const activeCategory = searchParams.get("category") || "all";
 
-  const setCategoryQuery = useCallback(
-    (category: string | null) => {
+  const rawCategory = searchParams.get("category");
+  const activeCategory =
+    rawCategory && CATEGORY_IDS.has(rawCategory) ? rawCategory : "all";
+
+  const sortBy = parseSortParam(searchParams.get("sort"));
+  const pageFromUrl = parsePageParam(searchParams.get("page"));
+
+  const updateSearchParams = useCallback(
+    (mutate: (p: URLSearchParams) => void, mode: "push" | "replace" = "push") => {
       const p = new URLSearchParams(searchParams.toString());
-      if (!category || category === "all") {
-        p.delete("category");
-      } else {
-        p.set("category", category);
-      }
+      mutate(p);
+      finalizeListParams(p);
       const qs = p.toString();
-      router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      const nav = mode === "replace" ? router.replace : router.push;
+      nav(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
     [pathname, router, searchParams]
   );
 
-  const [sortBy, setSortBy] = useState("featured");
-  const [page, setPage] = useState(1);
+  /** Remove unknown `category` from the URL (e.g. typos or old slugs). */
+  useEffect(() => {
+    const raw = searchParams.get("category");
+    if (raw && !CATEGORY_IDS.has(raw)) {
+      updateSearchParams((p) => p.delete("category"), "replace");
+    }
+  }, [searchParams, updateSearchParams]);
+
+  const setCategoryQuery = useCallback(
+    (categoryId: string | null) => {
+      updateSearchParams((p) => {
+        if (!categoryId || categoryId === "all") {
+          p.delete("category");
+        } else {
+          p.set("category", categoryId);
+        }
+        p.delete("page");
+      });
+    },
+    [updateSearchParams]
+  );
+
+  const setSortQuery = useCallback(
+    (value: SortValue) => {
+      updateSearchParams((p) => {
+        if (value === "featured") p.delete("sort");
+        else p.set("sort", value);
+        p.delete("page");
+      });
+    },
+    [updateSearchParams]
+  );
+
+  const setPageQuery = useCallback(
+    (n: number) => {
+      updateSearchParams((p) => {
+        if (n <= 1) p.delete("page");
+        else p.set("page", String(n));
+      });
+    },
+    [updateSearchParams]
+  );
+
   const perPage = 8;
 
   const { data: rawList = [], isLoading, isError, error } = useQuery({
@@ -47,7 +118,20 @@ const AllProducts = () => {
     staleTime: 60_000,
   });
 
+  const { data: rawUpcoming = [] } = useQuery({
+    queryKey: ["store", "upcoming"],
+    queryFn: fetchStoreUpcomingProducts,
+    staleTime: 120_000,
+  });
+
   const products = useMemo(() => rawList.map((p) => mapApiProductToStoreProduct(p)), [rawList]);
+
+  const upcomingInCategory = useMemo(() => {
+    if (activeCategory === "all") return [];
+    return rawUpcoming
+      .map((p) => mapApiUpcomingToStoreItem(p))
+      .filter((u) => u.categorySlug === activeCategory);
+  }, [activeCategory, rawUpcoming]);
 
   const filtered = useMemo(() => {
     let result =
@@ -69,49 +153,55 @@ const AllProducts = () => {
   }, [activeCategory, sortBy, products]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const page = Math.min(pageFromUrl, totalPages);
 
+  /** If URL page is past the last page (e.g. fewer products after filter), clamp in the address bar. */
   useEffect(() => {
-    setPage(1);
-  }, [activeCategory, sortBy, rawList.length]);
-
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
+    if (pageFromUrl !== page) {
+      updateSearchParams(
+        (p) => {
+          if (page <= 1) p.delete("page");
+          else p.set("page", String(page));
+        },
+        "replace"
+      );
+    }
+  }, [pageFromUrl, page, updateSearchParams]);
 
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+
+  const showEmptyGridMessage =
+    !filtered.length && !(activeCategory !== "all" && upcomingInCategory.length > 0);
 
   return (
     <PageTransition>
       <PageHeader
-        title={t("Our Therapeutic Solutions", "حلولنا العلاجية")}
+        title={t("Shop skincare & care", "تسوقي العناية")}
         subtitle={t(
-          "Discover our curated collection of imported natural oils designed specifically for treating hair, skin, and joints.",
-          "اكتشفي مجموعتنا المختارة من الزيوت الطبيعية المستوردة المصممة خصيصاً لعلاج الشعر، البشرة والمفاصل."
+          "Browse gentle, effective formulas for skin, hair, and body — made to support a healthy-looking glow.",
+          "تصفّحي تركيبات لطيفة وفعّالة للبشرة والشعر والجسم — عشان إشراقة وصحة في المظهر."
         )}
         breadcrumbs={[{ label: t("All Products", "جميع المنتجات") }]}
       />
 
-      <div className="container mx-auto px-4 py-12 md:py-16">
+      <div className="container mx-auto px-page pt-12 md:pt-16 pb-4">
         {isError && (
           <p className="text-center text-destructive py-12" role="alert">
             {error instanceof Error ? error.message : t("Failed to load products", "تعذر تحميل المنتجات")}
           </p>
         )}
 
-        {/* Filters */}
+        {/* Filters — category + sort are reflected in the URL for refresh/share */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="flex flex-wrap gap-3 mb-8 items-center justify-between"
+          className="flex flex-wrap gap-3 items-center justify-between"
         >
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => {
-                setCategoryQuery(null);
-                setPage(1);
-              }}
+              onClick={() => setCategoryQuery(null)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                 activeCategory === "all"
                   ? "gradient-brand text-primary-foreground"
@@ -124,10 +214,7 @@ const AllProducts = () => {
               <button
                 key={c.id}
                 type="button"
-                onClick={() => {
-                  setCategoryQuery(c.id);
-                  setPage(1);
-                }}
+                onClick={() => setCategoryQuery(c.id)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   activeCategory === c.id
                     ? "gradient-brand text-primary-foreground"
@@ -142,7 +229,7 @@ const AllProducts = () => {
           <div className="relative">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => setSortQuery(parseSortParam(e.target.value))}
               className="appearance-none bg-card border border-border rounded-lg px-4 py-2 pe-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="featured">{t("Featured", "المميزة")}</option>
@@ -153,7 +240,11 @@ const AllProducts = () => {
             <ChevronDown className="absolute end-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           </div>
         </motion.div>
+      </div>
 
+      {activeCategory !== "all" && <UpcomingShopRows items={upcomingInCategory} />}
+
+      <div className="container mx-auto px-page pb-12 md:pb-16 pt-8">
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -164,7 +255,7 @@ const AllProducts = () => {
           <>
             <AnimatePresence mode="wait">
               <StaggerContainer
-                key={`${activeCategory}-${page}`}
+                key={`${activeCategory}-${sortBy}-${page}`}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
               >
                 {paginated.map((p) => (
@@ -175,7 +266,7 @@ const AllProducts = () => {
               </StaggerContainer>
             </AnimatePresence>
 
-            {!paginated.length && !isError && (
+            {showEmptyGridMessage && !isError && (
               <p className="text-center text-muted-foreground py-16">
                 {t("No products match these filters.", "لا توجد منتجات مطابقة لهذه الفلاتر.")}
               </p>
@@ -192,7 +283,7 @@ const AllProducts = () => {
                   <button
                     type="button"
                     key={i}
-                    onClick={() => setPage(i + 1)}
+                    onClick={() => setPageQuery(i + 1)}
                     className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
                       page === i + 1
                         ? "gradient-brand text-primary-foreground"

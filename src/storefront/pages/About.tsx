@@ -65,16 +65,16 @@ const About = () => {
     {
       name: t("Sesame Oil", "زيت السمسم"),
       desc: t(
-        "Rich in antioxidants and minerals for hair and skin relief.",
-        "غني بمضادات الأكسدة والمعادن لعلاج الشعر والبشرة."
+        "Rich in antioxidants and minerals to support healthy-looking hair and skin.",
+        "غني بمضادات الأكسدة والمعادن عشان شعر وبشرة أحسن في المظهر."
       ),
       image: oilSesame.src,
     },
     {
       name: t("Flaxseed Oil", "زيت بذور الكتان"),
       desc: t(
-        "The highest source of Omega-3 for deep therapeutic healing.",
-        "أعلى مصدر للأوميجا-3 للعلاج العميق."
+        "A rich plant source of Omega-3 to support softness and comfort for skin and hair.",
+        "مصدر غني بالأوميجا-3 من النبات عشان نعومة وراحة في مظهر البشرة والشعر."
       ),
       image: oilFlaxseed.src,
     },
@@ -83,16 +83,16 @@ const About = () => {
   return (
     <div>
       <PageHeader
-        title={t("About LAMORQ", "عن لاموركيو")}
+        title={t("About LAMORQ", "عن لامورك")}
         subtitle={t(
-          "Purity from the heart of Egypt — therapeutic natural care for every home.",
-          "النقاء من قلب مصر — عناية طبيعية علاجية لكل بيت."
+          "Natural skincare from Egypt — gentle ingredients, clear standards, visible results.",
+          "عناية طبيعية من مصر — مكونات لطيفة، معايير واضحة، ونتايج تبان."
         )}
       />
 
       {/* ── Our Philosophy (Story) ── */}
       <section className="bg-background">
-        <div className="container mx-auto px-4 py-16 md:py-24 max-w-6xl">
+        <div className="container mx-auto px-page py-16 md:py-24 max-w-6xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-start">
             {/* Left: Text + Badges */}
             <ScrollReveal>
@@ -103,8 +103,8 @@ const About = () => {
                 <div className="space-y-5 text-muted-foreground text-[15px] leading-[1.85]">
                   <p>
                     {t(
-                      "At LAMORQ, we don't just create beauty products; we craft therapeutic solutions. Our journey began by sourcing the finest cold-pressed oils — Jojoba, Sesame, and Flaxseed — imported for their unparalleled quality, and blending them with potent herbs native to the Egyptian soil.",
-                      "في لاموركيو، لا نصنع منتجات تجميل فحسب؛ بل نبتكر حلولاً علاجية. بدأت رحلتنا باستيراد أجود الزيوت المعصورة على البارد — الجوجوبا والسمسم وبذور الكتان — ومزجها مع أعشاب قوية من التربة المصرية."
+                      "At LAMORQ, we focus on skincare you can understand. We source cold-pressed oils and proven actives, then blend them with care in Egypt — for formulas that feel simple and deliver visible results.",
+                      "في لامورك، بنركّز على عناية تقدري تفهمي مكوناتها. بنجيب زيوت معصورة على البارد ومواد فعّالة مدروسة، وبنمزجها بعناية في مصر — عشان تركيبات بسيطة في الاستخدام ونتايج واضحة."
                     )}
                   </p>
                   <p>
@@ -150,14 +150,14 @@ const About = () => {
       </section>
 
       {/* ── Why Choose LAMORQ ── */}
-      <section className="container mx-auto px-4 py-16 md:py-24 max-w-5xl">
+      <section className="container mx-auto px-page py-16 md:py-24 max-w-5xl">
         <ScrollReveal>
           <div className="text-center mb-12">
             <span className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium">
               {t("Our Values", "قيمنا")}
             </span>
             <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-3">
-              {t("Why Choose LAMORQ", "لماذا تختار لاموركيو")}
+              {t("Why Choose LAMORQ", "لماذا تختار لامورك")}
             </h2>
           </div>
         </ScrollReveal>
@@ -183,7 +183,7 @@ const About = () => {
 
       {/* ── Mission & Vision ── */}
       <section className="bg-muted/20">
-        <div className="container mx-auto px-4 py-16 md:py-24 max-w-5xl">
+        <div className="container mx-auto px-page py-16 md:py-24 max-w-5xl">
           <ScrollReveal>
             <div className="text-center mb-12">
               <span className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium">
@@ -206,8 +206,8 @@ const About = () => {
                 </h2>
                 <p className="text-primary-foreground/80 text-[15px] leading-[1.8] flex-1">
                   {t(
-                    "To bring therapeutic natural care to every Egyptian home — making pure, science-backed treatments accessible and affordable for all.",
-                    "إيصال العناية الطبيعية العلاجية لكل بيت مصري — وجعل العلاجات النقية المدعومة علمياً في متناول الجميع."
+                    "To bring gentle, science-backed skincare to every Egyptian home — effective, accessible, and easy to use every day.",
+                    "نوصّل عناية لطيفة ومدعومة بالعلم لكل بيت مصري — فعّالة، في المتناول، وسهلة في الاستخدام اليومي."
                   )}
                 </p>
                 <div className="flex gap-1 mt-8">
@@ -228,14 +228,14 @@ const About = () => {
                 </h2>
                 <p className="text-muted-foreground text-[15px] leading-[1.8] flex-1">
                   {t(
-                    "To become the leading Egyptian brand in natural therapeutic oils — trusted globally for our purity, transparency, and commitment to quality.",
-                    "أن نصبح العلامة المصرية الرائدة في الزيوت الطبيعية العلاجية — موثوقة عالمياً لنقائنا وشفافيتنا والتزامنا بالجودة."
+                    "To become a trusted Egyptian name in natural skincare — known for purity, transparency, and formulas that deliver visible results.",
+                    "نبقى اسم مصري موثوق في العناية الطبيعية — معروفين بالنقاء والشفافية وتركيبات بتدي نتايج واضحة."
                   )}
                 </p>
                 <p className="text-muted-foreground/60 text-sm italic mt-8">
                   {t(
                     '"When you choose LAMORQ, you choose purity, transparency, and a better way of living."',
-                    '"عندما تختار لاموركيو، فأنت تختار النقاء والشفافية وأسلوب حياة أفضل."'
+                    '"عندما تختار لامورك، فأنت تختار النقاء والشفافية وأسلوب حياة أفضل."'
                   )}
                 </p>
               </div>
@@ -246,7 +246,7 @@ const About = () => {
 
       {/* ── Our Ingredients (Pure Imported Oils) ── */}
       <section className="bg-muted/20">
-        <div className="container mx-auto px-4 py-16 md:py-24 max-w-5xl">
+        <div className="container mx-auto px-page py-16 md:py-24 max-w-5xl">
           <ScrollReveal>
             <div className="text-center mb-12">
               <span className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium">

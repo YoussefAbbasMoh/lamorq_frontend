@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 @plugin "tailwindcss-animate";
@@ -8,6 +6,12 @@
 @source "../**/*.{js,ts,jsx,tsx,mdx}";
 
 @custom-variant dark (&:is(.dark *));
+
+/* Framer Motion: useScroll({ target }) uses <html> as the scroll container; it must not be
+   position: static or dev warns and offset math can be wrong. */
+html {
+  position: relative;
+}
 
 /*
  * LAMORQ + shadcn tokens (aligned with src_lavable/styles/theme.css
@@ -92,9 +96,10 @@
 }
 
 @theme inline {
-  --font-sans: "Cairo", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Playfair Display", ui-serif, Georgia, serif;
-  --font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Bound in layout.tsx via next/font (see src/app/fonts.ts) */
+  --font-sans: var(--font-cairo), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), ui-serif, Georgia, serif;
+  --font-body: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -188,6 +193,22 @@ body {
   overflow-x: hidden;
 }
 
+/* Hide vertical scrollbar (page still scrolls) */
+html {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE / legacy Edge */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera, Chromium Edge */
+}
+
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -200,6 +221,11 @@ a {
 }
 
 @layer utilities {
+  /** Horizontal inset for page content (~10% each side); section backgrounds stay full-bleed. */
+  .px-page {
+    padding-inline: 10%;
+  }
+
   .gradient-brand {
     background: var(--gradient-brand);
   }

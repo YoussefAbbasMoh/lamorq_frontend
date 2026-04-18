@@ -65,8 +65,6 @@ type AdminContextValue = {
   handleLogout: () => void;
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  shippingPrice: number;
-  setShippingPrice: React.Dispatch<React.SetStateAction<number>>;
   messageStatusFilter: string;
   setMessageStatusFilter: React.Dispatch<React.SetStateAction<string>>;
   adminProfile: { email: string; password: string };
@@ -116,7 +114,6 @@ type AdminContextValue = {
   handleDeleteMessage: (id: string) => Promise<void>;
   handleAddIngredient: (ingredient: string) => void;
   handleRemoveIngredient: (index: number) => void;
-  handleSaveShippingPrice: () => void;
   handleAddReview: () => void;
   handleEditReview: (review: ReviewData) => void;
   handleDeleteReview: (id: string) => Promise<void>;
@@ -139,7 +136,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [shippingPrice, setShippingPrice] = useState(50);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [editingReview, setEditingReview] = useState<ReviewData | null>(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -450,10 +446,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const handleSaveShippingPrice = () => {
-    alert(`Shipping price updated to ${shippingPrice} EGP`);
-  };
-
   const handleAddReview = () => {
     setEditingReview(null);
     setShowReviewModal(true);
@@ -554,8 +546,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     handleLogout,
     searchQuery,
     setSearchQuery,
-    shippingPrice,
-    setShippingPrice,
     messageStatusFilter,
     setMessageStatusFilter,
     adminProfile,
@@ -605,7 +595,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     handleDeleteMessage,
     handleAddIngredient,
     handleRemoveIngredient,
-    handleSaveShippingPrice,
     handleAddReview,
     handleEditReview,
     handleDeleteReview,

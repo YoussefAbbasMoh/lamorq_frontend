@@ -1,15 +1,18 @@
 "use client";
 
+import Image from "next/image";
 import { Star, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Product } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useLang } from "@/contexts/LanguageContext";
+import { shouldOptimizeRemoteImage } from "@/lib/next-image-policy";
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addToCart } = useCart();
   const { isAr, t } = useLang();
+  const optimizeImage = shouldOptimizeRemoteImage(product.image);
 
   return (
     <motion.div
@@ -19,15 +22,30 @@ const ProductCard = ({ product }: { product: Product }) => {
     >
       {/* Image area */}
       <Link href={`/products/${product.id}`} className="block relative overflow-hidden">
-        <div className="aspect-[3/4] bg-gradient-to-b from-secondary/40 to-muted/30 flex items-center justify-center p-6">
-          <motion.img
-            src={product.image}
-            alt={isAr ? product.nameAr : product.name}
-            className="w-full h-full object-cover rounded-xl"
+        <div className="aspect-[3/4] relative bg-gradient-to-b from-secondary/40 to-muted/30 flex items-center justify-center p-6">
+          <motion.div
+            className="relative w-full h-full rounded-xl overflow-hidden"
             whileHover={{ scale: 1.04 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            loading="lazy"
-          />
+          >
+            {optimizeImage ? (
+              <Image
+                src={product.image}
+                alt={isAr ? product.nameAr : product.name}
+                fill
+                sizes="(max-width: 640px) 50vw, 25vw"
+                className="object-cover"
+              />
+            ) : (
+              <img
+                src={product.image}
+                alt={isAr ? product.nameAr : product.name}
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+            )}
+          </motion.div>
         </div>
 
         {/* Discount badge */}

@@ -7,13 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useLang } from "@/contexts/LanguageContext";
 
-const egyptGovernorates = [
-  "Cairo", "Giza", "Alexandria", "Qalyubia", "Dakahlia", "Sharqia", "Gharbia",
-  "Monufia", "Beheira", "Kafr El Sheikh", "Damietta", "Port Said", "Ismailia",
-  "Suez", "Fayoum", "Beni Suef", "Minya", "Asyut", "Sohag", "Qena",
-  "Luxor", "Aswan", "Red Sea", "New Valley", "Matruh", "North Sinai", "South Sinai",
-];
-
 function CheckoutInputField({
   placeholder,
   value,
@@ -39,11 +32,20 @@ function CheckoutInputField({
 }
 
 const Checkout = () => {
-  const { items, subtotal, clearCart } = useCart();
+  const {
+    items,
+    subtotal,
+    clearCart,
+    shipping,
+    total,
+    shippingRegions,
+    selectedShippingRegionId,
+    setSelectedShippingRegionId,
+  } = useCart();
   const { t, isAr } = useLang();
   const [form, setForm] = useState({
     firstName: "", lastName: "", address: "", apartment: "",
-    city: "", governorate: "Cairo", postalCode: "", phone: "",
+    city: "", postalCode: "", phone: "",
   });
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "card" | "wallet">("cod");
   const [saveInfo, setSaveInfo] = useState(false);
@@ -51,13 +53,18 @@ const Checkout = () => {
   const [showItems, setShowItems] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
-  const orderTotal = subtotal;
+  const selectedRegion = shippingRegions.find((r) => String(r._id) === selectedShippingRegionId);
+  const governorateLabel = selectedRegion
+    ? isAr
+      ? selectedRegion.government_ar
+      : selectedRegion.government_en
+    : "";
 
   const handleField = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }));
 
   if (items.length === 0 && !confirmed) {
     return (
-      <div className="container mx-auto px-4 py-16 md:py-24 text-center">
+      <div className="container mx-auto px-page py-16 md:py-24 text-center">
         <h1 className="font-display text-2xl font-bold text-foreground">{t("No items in cart", "لا توجد عناصر في السلة")}</h1>
         <Link href="/products" className="text-primary hover:underline mt-4 inline-block">{t("Shop Now", "تسوق الآن")}</Link>
       </div>
@@ -66,15 +73,15 @@ const Checkout = () => {
 
   if (confirmed) {
     return (
-      <div className="container mx-auto px-4 py-16 md:py-24 max-w-lg text-center space-y-8">
+      <div className="container mx-auto px-page py-16 md:py-24 max-w-lg text-center space-y-8">
         <div className="w-20 h-20 gradient-brand rounded-full flex items-center justify-center mx-auto">
           <Check className="w-10 h-10 text-primary-foreground" />
         </div>
         <h2 className="font-display text-3xl font-bold text-foreground">{t("Order Confirmed!", "تم تأكيد الطلب!")}</h2>
         <p className="text-muted-foreground">
           {t(
-            "Thank you for your order! You will receive a confirmation SMS shortly. Your natural treatments are on their way.",
-            "شكراً لطلبك! ستتلقى رسالة تأكيد قريباً. علاجاتك الطبيعية في الطريق."
+            "Thank you for your order! You will receive a confirmation SMS shortly. Your LAMORQ products are on their way.",
+            "شكراً لطلبك! هتوصلك رسالة تأكيد قريباً. منتجات لامورك في الطريق."
           )}
         </p>
         <div className="bg-muted p-4 rounded-lg text-sm">
@@ -164,13 +171,20 @@ const Checkout = () => {
               <div className="relative">
                 <label className="absolute top-2 start-4 text-xs text-muted-foreground">{t("Governorate", "المحافظة")}</label>
                 <select
-                  value={form.governorate}
-                  onChange={(e) => handleField("governorate", e.target.value)}
-                  className="w-full px-4 pt-7 pb-3 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 appearance-none cursor-pointer transition-colors"
+                  value={selectedShippingRegionId || ""}
+                  onChange={(e) => setSelectedShippingRegionId(e.target.value)}
+                  disabled={shippingRegions.length === 0}
+                  className="w-full px-4 pt-7 pb-3 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 appearance-none cursor-pointer transition-colors disabled:opacity-60"
                 >
-                  {egyptGovernorates.map((g) => (
-                    <option key={g} value={g}>{g}</option>
-                  ))}
+                  {shippingRegions.length === 0 ? (
+                    <option value="">{t("Loading regions…", "جاري تحميل المحافظات…")}</option>
+                  ) : (
+                    shippingRegions.map((g) => (
+                      <option key={g._id} value={String(g._id)}>
+                        {isAr ? g.government_ar : g.government_en}
+                      </option>
+                    ))
+                  )}
                 </select>
                 <ChevronDown className="absolute end-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               </div>
@@ -275,13 +289,22 @@ const Checkout = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">{t("Shipping", "الشحن")}</span>
-              <span className="text-foreground">{t("FREE", "مجاني")}</span>
+              <div className="text-end">
+                <span className="text-foreground">
+                  {t(`E£${shipping.toLocaleString()}`, `${shipping.toLocaleString()} ج.م`)}
+                </span>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {governorateLabel
+                    ? t(`Governorate: ${governorateLabel}`, `المحافظة: ${governorateLabel}`)
+                    : "—"}
+                </p>
+              </div>
             </div>
             <div className="flex justify-between items-baseline pt-3 border-t border-border">
               <span className="text-base font-bold text-foreground">{t("Total", "الإجمالي")}</span>
               <div className="text-end">
                 <span className="text-xs text-muted-foreground me-2">{t("EGP", "ج.م")}</span>
-                <span className="text-xl font-bold text-foreground">{t(`E£${orderTotal.toLocaleString()}`, `${orderTotal.toLocaleString()} ج.م`)}</span>
+                <span className="text-xl font-bold text-foreground">{t(`E£${total.toLocaleString()}`, `${total.toLocaleString()} ج.م`)}</span>
               </div>
             </div>
           </div>

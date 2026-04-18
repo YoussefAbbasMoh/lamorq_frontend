@@ -44,7 +44,7 @@ export function LoginPage() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-secondary to-white flex items-center justify-center p-4 ${isRTL ? "rtl" : "ltr"}`}
+      className={`min-h-screen bg-gradient-to-br from-secondary to-white flex items-center justify-center px-page py-6 ${isRTL ? "rtl" : "ltr"}`}
     >
       <div className="w-full max-w-md">
         <div className="flex justify-end mb-4">

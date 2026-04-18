@@ -25,7 +25,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <AdminSidebar sidebarOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
 
         <main
-          className={`flex-1 min-w-0 w-full ${isRTL ? "md:mr-64" : "md:ml-64"} p-4 sm:p-6 md:p-8`}
+          className={`flex-1 min-w-0 w-full ${isRTL ? "md:mr-64" : "md:ml-64"} py-4 sm:py-6 md:py-8 px-page`}
         >
           <div className="flex items-center justify-between gap-4 md:hidden mb-4">
             <button

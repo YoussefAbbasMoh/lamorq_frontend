@@ -1,0 +1,24 @@
+---
+description: LAMORQ brand voice, SEO, and copy constraints for storefront and content
+globs: "**/*.{tsx,ts}"
+alwaysApply: true
+---
+
+# LAMORQ — agents must follow
+
+Read the full reference: `docs/LAMORQ-SEO-CONTENT-RULES.md`.
+
+## Non-negotiables
+
+- **Medical / therapeutic wording:** Never use treat, cure, heal, therapy, clinical claims, or Arabic equivalents (علاجي، يعالج، علاجية، تشخيص، دواء). Describe **visible, cosmetic** outcomes: helps brighten the *look* of dark spots, supports an even-looking tone, visible results.
+- **Titles:** Storefront pages use Next `metadata.title` with root template `%s — LAMORQ`. Keep the visible title segment under ~45 characters so the full `<title>` stays near 60 characters.
+- **Meta descriptions:** ≤155 characters, one primary keyword, human-readable, soft benefit close.
+- **One H1 per page** with the primary keyword or approved homepage line (`Simple Skincare. Real Results.`). Do not skip heading levels.
+- **Canonical:** Set `alternates.canonical` per route; `metadataBase` comes from `NEXT_PUBLIC_SITE_URL` (see `src/lib/site.ts`).
+- **Images:** Descriptive `alt` always; LCP hero uses `priority` / no lazy; below-fold uses `loading="lazy"`.
+- **JSON-LD:** `OrganizationJsonLd` on store layout; `ProductJsonLd` on product detail. No medical claims in schema text.
+- **OG/Twitter:** Use `pageOpenGraph` / `pageTwitter` from `src/lib/metadata-helpers.ts`. Optional default image: `NEXT_PUBLIC_OG_IMAGE_URL` (1200×630).
+
+## Voice
+
+Premium, natural, Egyptian skincare; confident and friendly; English primary, Egyptian Arabic secondary for bilingual UI strings.
