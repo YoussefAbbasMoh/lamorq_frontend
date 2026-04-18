@@ -107,6 +107,14 @@ export const adminTranslations: Record<
     catalogProductCount: "Default and upcoming products",
     activeUsersFootnote: "Unique visitors (last {{days}} days)",
     loadingDashboard: "Loading…",
+    productContentSection: "Product content",
+    productContentTabsHelp:
+      "Open a tab below, then type the English and Arabic text for that section.",
+    detailHintDescription: "Main description shown on the product page.",
+    detailHintIngredients:
+      "Ingredients section body text. Ingredient chips above apply to default products only.",
+    detailHintBenefits: "Benefits section copy for the product page.",
+    detailHintHowToUse: "Instructions for how to use the product.",
   },
   ar: {
     login: "تسجيل الدخول",
@@ -206,5 +214,12 @@ export const adminTranslations: Record<
     catalogProductCount: "منتجات حالية ومقبلة",
     activeUsersFootnote: "زيارات فريدة (آخر {{days}} أيام)",
     loadingDashboard: "جاري التحميل…",
+    productContentSection: "محتوى المنتج",
+    productContentTabsHelp: "افتحي تاباً ثم اكتبي النص بالإنجليزي والعربي لذلك القسم.",
+    detailHintDescription: "الوصف الرئيسي في صفحة المنتج.",
+    detailHintIngredients:
+      "نص قسم المكونات. الرقائق أعلاه للمنتجات الافتراضية فقط.",
+    detailHintBenefits: "نص قسم الفوائد في صفحة المنتج.",
+    detailHintHowToUse: "تعليمات طريقة الاستخدام.",
   },
 };

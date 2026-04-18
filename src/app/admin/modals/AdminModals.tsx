@@ -1,9 +1,30 @@
 "use client";
 
+import { useEffect } from "react";
 import { X, Upload } from "lucide-react";
 import { useAdmin } from "../admin-context";
-import type { AdminTranslations } from "../admin-context";
+import type { AdminTranslations, ProductFormState } from "../admin-context";
 import type { Order, ProductType } from "../types";
+
+const DETAIL_TAB_FIELDS: Record<
+  "description" | "ingredients" | "benefits" | "howToUse",
+  { en: keyof ProductFormState; ar: keyof ProductFormState }
+> = {
+  description: { en: "descriptionEn", ar: "descriptionAr" },
+  ingredients: { en: "ingredientsEn", ar: "ingredientsAr" },
+  benefits: { en: "benefitsEn", ar: "benefitsAr" },
+  howToUse: { en: "howToUseEn", ar: "howToUseAr" },
+};
+
+const DETAIL_HINT_KEYS: Record<
+  keyof typeof DETAIL_TAB_FIELDS,
+  keyof AdminTranslations
+> = {
+  description: "detailHintDescription",
+  ingredients: "detailHintIngredients",
+  benefits: "detailHintBenefits",
+  howToUse: "detailHintHowToUse",
+};
 
 function moneyEg(n: number | undefined) {
   if (n == null || Number.isNaN(Number(n))) return "—";
@@ -197,6 +218,30 @@ export function AdminModals() {
     isRTL,
   } = useAdmin();
 
+  const detailTabs =
+    productFormData.productType === "default"
+      ? (["description", "ingredients", "benefits", "howToUse"] as const)
+      : (["description"] as const);
+
+  const defaultTabs = ["description", "ingredients", "benefits", "howToUse"] as const;
+
+  useEffect(() => {
+    if (productFormData.productType === "upcoming" && productTab !== "description") {
+      setProductTab("description");
+    }
+  }, [productFormData.productType, productTab, setProductTab]);
+
+  const activeDetailTab: (typeof defaultTabs)[number] =
+    productFormData.productType === "upcoming"
+      ? "description"
+      : defaultTabs.includes(productTab as (typeof defaultTabs)[number])
+        ? (productTab as (typeof defaultTabs)[number])
+        : "description";
+  const detailFieldKeys =
+    DETAIL_TAB_FIELDS[activeDetailTab as keyof typeof DETAIL_TAB_FIELDS] ?? DETAIL_TAB_FIELDS.description;
+  const detailHintKey =
+    DETAIL_HINT_KEYS[activeDetailTab as keyof typeof DETAIL_HINT_KEYS] ?? "detailHintDescription";
+
   return (
     <>
       {showProductModal && (
@@ -290,12 +335,11 @@ export function AdminModals() {
                     <select
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                       value={productFormData.productType}
-                      onChange={(e) =>
-                        setProductFormData({
-                          ...productFormData,
-                          productType: e.target.value as ProductType,
-                        })
-                      }
+                      onChange={(e) => {
+                        const next = e.target.value as ProductType;
+                        setProductFormData({ ...productFormData, productType: next });
+                        if (next === "upcoming") setProductTab("description");
+                      }}
                     >
                       <option value="default">Default Product</option>
                       <option value="upcoming">Upcoming Product</option>
@@ -461,51 +505,66 @@ export function AdminModals() {
                   </label>
                 </div>
 
-                <div>
-                  <div className="flex gap-4 border-b border-gray-200 mb-4">
-                    {(productFormData.productType === "default"
-                      ? ["description", "ingredients", "benefits", "howToUse"]
-                      : ["description"]
-                    ).map((tab) => (
+                <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-4">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t.productContentSection}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t.productContentTabsHelp}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 sm:gap-4 border-b border-gray-200 pb-1">
+                    {detailTabs.map((tab) => (
                       <button
                         key={tab}
                         type="button"
                         onClick={() => setProductTab(tab)}
-                        className={`pb-3 text-sm transition-colors ${
-                          productTab === tab
+                        className={`pb-3 px-1 text-sm font-medium transition-colors ${
+                          activeDetailTab === tab
                             ? "text-primary border-b-2 border-primary"
                             : "text-gray-500 hover:text-foreground"
                         }`}
                       >
-                        {t[tab as keyof typeof t]}
+                        {t[tab as keyof AdminTranslations]}
                       </button>
                     ))}
                   </div>
 
-                  <textarea
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-                    placeholder={`Enter ${productTab} in English`}
-                    onChange={(e) =>
-                      setProductFormData({
-                        ...productFormData,
-                        [`${productTab}En`]: e.target.value,
-                      } as typeof productFormData)
-                    }
-                  />
+                  <p className="text-xs text-muted-foreground">{t[detailHintKey]}</p>
 
-                  <textarea
-                    rows={4}
-                    dir="rtl"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring mt-3"
-                    placeholder={`أدخل ${productTab} بالعربية`}
-                    onChange={(e) =>
-                      setProductFormData({
-                        ...productFormData,
-                        [`${productTab}Ar`]: e.target.value,
-                      } as typeof productFormData)
-                    }
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-foreground mb-1.5">
+                        English
+                      </label>
+                      <textarea
+                        rows={8}
+                        value={String(productFormData[detailFieldKeys.en] ?? "")}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+                        placeholder={`${t[activeDetailTab as keyof AdminTranslations]} (EN)`}
+                        onChange={(e) =>
+                          setProductFormData({
+                            ...productFormData,
+                            [detailFieldKeys.en]: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div dir="rtl">
+                      <label className="block text-xs font-medium text-foreground mb-1.5">
+                        العربية
+                      </label>
+                      <textarea
+                        rows={8}
+                        value={String(productFormData[detailFieldKeys.ar] ?? "")}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+                        placeholder={`${t[activeDetailTab as keyof AdminTranslations]} (ع)`}
+                        onChange={(e) =>
+                          setProductFormData({
+                            ...productFormData,
+                            [detailFieldKeys.ar]: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">

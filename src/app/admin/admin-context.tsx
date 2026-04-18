@@ -220,6 +220,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setProductImageFile(null);
     setProductImagePreview("");
     if (productImageInputRef.current) productImageInputRef.current.value = "";
+    setProductTab("description");
     setShowProductModal(true);
   };
 
@@ -248,6 +249,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       ingredients: product.ingredients || [],
       isFeatured: product.isFeatured,
     });
+    setProductTab("description");
     setShowProductModal(true);
   };
 

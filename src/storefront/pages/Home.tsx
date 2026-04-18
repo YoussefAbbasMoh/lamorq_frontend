@@ -34,7 +34,6 @@ const STORE_PRODUCTS_KEY = ["store", "products"] as const;
 const BANNER_OFFERS_KEY = ["bannerOffers"] as const;
 const REAL_RESULTS_KEY = ["store", "real-results"] as const;
 import heroProductImg from "@/assets/hero-product-bottle.png";
-import beforeAfterImg from "@/assets/before-after.jpg";
 import glowSerumImg from "@/assets/product-glow-serum.jpg";
 import productJojobaImg from "@/assets/product-jojoba.jpg";
 import productHairImg from "@/assets/product-hair-serum.jpg";
@@ -136,7 +135,6 @@ const Home = () => {
 
   const products = useMemo(() => rawProducts.map((p) => mapApiProductToStoreProduct(p)), [rawProducts]);
   const featured = useMemo(() => products.filter((p) => p.featured).slice(0, 4), [products]);
-  const spotlightId = featured[0]?.id ?? products[0]?.id;
 
   const reviews = useMemo(() => {
     if (!ratingsSuccess) return [];
@@ -656,23 +654,18 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 6. Real results — GET /api/real-results (fallback: static Glow Serum block) */}
-      <section className="py-12 md:py-16 bg-background">
-        <div className="container mx-auto px-page">
-          <ScrollReveal>
-            <div className="text-center mb-8">
-              <span className="text-sm font-medium text-primary tracking-widest uppercase">
-                {t("Real Results", "نتائج حقيقية")}
-              </span>
-              {realResultBlocks.length === 0 ? (
-                <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mt-2">
-                  {t("Glow Serum", "سيروم التوهج")}
-                </h2>
-              ) : null}
-            </div>
-          </ScrollReveal>
+      {/* 6. Real results — only when API returns entries */}
+      {realResultBlocks.length > 0 && activeRealResultBlock ? (
+        <section className="py-12 md:py-16 bg-background">
+          <div className="container mx-auto px-page">
+            <ScrollReveal>
+              <div className="text-center mb-8">
+                <span className="text-sm font-medium text-primary tracking-widest uppercase">
+                  {t("Real Results", "نتائج حقيقية")}
+                </span>
+              </div>
+            </ScrollReveal>
 
-          {realResultBlocks.length > 0 && activeRealResultBlock ? (
             <div className="max-w-5xl mx-auto">
               {realResultBlocks.length > 1 ? (
                 <div className="flex items-center justify-center gap-4 mb-8" dir="ltr">
@@ -710,83 +703,9 @@ const Home = () => {
 
               {renderHomeRealResultBlock(activeRealResultBlock)}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch max-w-5xl mx-auto">
-              <ScrollReveal direction="left">
-                <div className="relative rounded-2xl overflow-hidden shadow-lg h-full min-h-[280px]">
-                  <Image
-                    src={beforeAfterImg}
-                    alt={t(
-                      "Before and after — skin looks brighter and more even after using LAMORQ Glow Serum",
-                      "قبل وبعد — البشرة أبرق وأوضح بعد استخدام سيروم التوهج من لامورك"
-                    )}
-                    width={800}
-                    height={600}
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="w-full h-full object-cover min-h-[280px]"
-                  />
-                  <div className="absolute bottom-0 inset-x-0 flex">
-                    <span className="flex-1 text-center py-2 bg-foreground/70 text-background text-xs font-bold tracking-widest uppercase backdrop-blur-sm">
-                      {t("Before", "قبل")}
-                    </span>
-                    <span className="flex-1 text-center py-2 bg-primary/80 text-primary-foreground text-xs font-bold tracking-widest uppercase backdrop-blur-sm">
-                      {t("After", "بعد")}
-                    </span>
-                  </div>
-                </div>
-              </ScrollReveal>
-
-              <ScrollReveal direction="right">
-                <div className="flex flex-col items-center justify-center text-center space-y-6 h-full">
-                  <motion.div
-                    whileHover={{ y: -6 }}
-                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                    className="bg-card rounded-2xl border border-border p-4 shadow-lg w-full max-w-[280px]"
-                  >
-                    <div className="aspect-square relative rounded-xl overflow-hidden bg-muted">
-                      <Image
-                        src={glowSerumImg}
-                        alt={t(
-                          "LAMORQ Glow Serum bottle — brightening serum for even, radiant skin",
-                          "زجاجة سيروم التوهج من لامورك — سيروم يفتح البشرة ويوحد المظهر"
-                        )}
-                        fill
-                        sizes="280px"
-                        className="object-cover"
-                      />
-                    </div>
-                  </motion.div>
-
-                  <div className="space-y-3 max-w-sm">
-                    <h3 className="font-display text-2xl font-bold text-foreground">
-                      {t("Glow Serum", "سيروم التوهج")}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t(
-                        "A lightweight daily serum for a natural glow and a more even tone — gentle enough to reach for every morning.",
-                        "سيروم خفيف للاستخدام اليومي عشان إشراقة طبيعية ولون أوضح — لطيف كفاية إنك تستخدميه كل صباح."
-                      )}
-                    </p>
-                    <div className="flex items-center justify-center gap-3">
-                      <span className="text-lg font-bold text-primary">
-                        {t("380 EGP", "380 ج.م")}
-                      </span>
-                      <span className="text-sm text-muted-foreground line-through">
-                        {t("480 EGP", "480 ج.م")}
-                      </span>
-                    </div>
-                    <Link href={spotlightId ? `/products/${spotlightId}` : "/products"}>
-                      <Button className="gradient-brand text-primary-foreground hover:opacity-90 mt-3 px-8">
-                        {t("Buy Now", "اشتري الآن")} <ChevronRight className="w-4 h-4 ms-1 rtl:-scale-x-100" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </ScrollReveal>
-            </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      ) : null}
 
       {/* 7. Reviews — GET /api/ratings */}
       <section className="py-16 md:py-24 bg-muted/30">
